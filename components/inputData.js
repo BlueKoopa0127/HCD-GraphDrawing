@@ -27,6 +27,7 @@ export function InputData() {
         const d = text[0]
           .map((e) => {
             return {
+              group: 'edges',
               data: {
                 id: e[0] + e[1],
                 source: e[0],
@@ -49,10 +50,16 @@ const getNodesFromLinks = (links) => {
 
   links.forEach((link) => {
     if (!nodes.find((node) => node.data.id == link.data.source)) {
-      nodes.push({ data: { id: link.data.source, label: link.data.source } });
+      nodes.push({
+        group: 'nodes',
+        data: { id: link.data.source, label: link.data.source },
+      });
     }
     if (!nodes.find((node) => node.data.id == link.data.target)) {
-      nodes.push({ data: { id: link.data.target, label: link.data.target } });
+      nodes.push({
+        group: 'nodes',
+        data: { id: link.data.target, label: link.data.target },
+      });
     }
   });
   return nodes;

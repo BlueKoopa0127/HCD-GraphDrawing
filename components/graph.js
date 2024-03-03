@@ -7,23 +7,30 @@ export function Graph({ data }) {
   cytoscape.use(cola); // register extension
 
   useEffect(() => {
-    const groups = [
-      {
-        group: 'nodes',
-        data: { id: 'group1', label: 'group1', parent: 'group' },
-      },
-      {
-        group: 'nodes',
-        data: { id: 'group2', label: 'group2', parent: 'group' },
-      },
-      {
+    const groupsName = ['PoFC', 'Cx', 'VA', 'In', 'Au', 'M1', 'LEC'];
+    const groups = groupsName.map((e) => {
+      return {
         group: 'nodes',
         classes: ['parent'],
-        data: { id: 'group', label: 'group' },
-      },
-    ];
-    const elements = data.concat(groups);
-
+        data: { id: e + 'Parent', label: e },
+      };
+    });
+    const groupData = data.map((e) => {
+      if (e.group == 'edges') return e;
+      const parent = groups.find((g) => e.data.id.includes(g.data.label));
+      if (parent == undefined) {
+        return e;
+      }
+      return {
+        groups: e.groups,
+        data: {
+          id: e.data.id,
+          label: e.data.label,
+          parent: parent.data.id,
+        },
+      };
+    });
+    const elements = groups.concat(groupData);
     console.log(elements);
 
     const style = [
