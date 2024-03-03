@@ -37,7 +37,7 @@ export function Graph({ data }) {
       {
         selector: 'node',
         style: {
-          'background-color': '#666',
+          'background-color': '#00FFFF',
           label: 'data(label)',
         },
       },
@@ -53,7 +53,7 @@ export function Graph({ data }) {
       {
         selector: '.parent',
         style: {
-          'background-color': '#FF00FF',
+          'background-color': '#EEEE00',
         },
       },
     ];
