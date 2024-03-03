@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import cytoscape from 'cytoscape';
+import cola from 'cytoscape-cola';
 
 export function Graph({ data }) {
   const cyRef = useRef(null);
+  cytoscape.use(cola); // register extension
 
   useEffect(() => {
     const elements = data;
@@ -32,7 +34,7 @@ export function Graph({ data }) {
       container: cyRef.current,
       elements: elements,
       style: style,
-      layout: { name: 'grid' },
+      layout: { name: 'cola' },
     });
 
     return () => {
@@ -42,7 +44,7 @@ export function Graph({ data }) {
 
   return (
     <div
-      style={{ backgroundColor: '#eee', width: '800px', height: '800px' }}
+      style={{ backgroundColor: '#eee', width: '1200px', height: '900px' }}
       ref={cyRef}
     />
   );
