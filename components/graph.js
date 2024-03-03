@@ -7,7 +7,22 @@ export function Graph({ data }) {
   cytoscape.use(cola); // register extension
 
   useEffect(() => {
-    const elements = data;
+    const groups = [
+      {
+        group: 'nodes',
+        data: { id: 'group1', label: 'group1', parent: 'group' },
+      },
+      {
+        group: 'nodes',
+        data: { id: 'group2', label: 'group2', parent: 'group' },
+      },
+      {
+        group: 'nodes',
+        classes: ['parent'],
+        data: { id: 'group', label: 'group' },
+      },
+    ];
+    const elements = data.concat(groups);
 
     console.log(elements);
 
@@ -28,14 +43,24 @@ export function Graph({ data }) {
           'target-arrow-shape': 'triangle',
         },
       },
+      {
+        selector: '.parent',
+        style: {
+          'background-color': '#FF00FF',
+        },
+      },
     ];
 
     const cy = cytoscape({
       container: cyRef.current,
       elements: elements,
       style: style,
-      layout: { name: 'cola' },
     });
+    cy.layout({
+      name: 'cola',
+      maxSimulationTime: 8000,
+      avoidOverlaps: true,
+    }).run();
 
     return () => {
       cy.destroy();
