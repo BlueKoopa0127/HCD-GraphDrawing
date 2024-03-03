@@ -1,19 +1,14 @@
 import { useRecoilValue } from 'recoil';
-import {
-  InputData,
-  linksDataState,
-  nodesDataState,
-} from '../components/inputData';
+import { InputData, graphDataState } from '../components/inputData';
 import { Graph } from '../components/graph';
 
 export default function Home({ Title }) {
-  const nodesData = useRecoilValue(nodesDataState);
-  const linksData = useRecoilValue(linksDataState);
+  const graphData = useRecoilValue(graphDataState);
   return (
     <div>
       <div>{Title}</div>
       <InputData />
-      <Graph nodesData={nodesData} linksData={linksData} />
+      <Graph data={[...graphData]} />
     </div>
   );
 }

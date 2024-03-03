@@ -1,15 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import cytoscape from 'cytoscape';
 
-export function Graph({ nodesData, edgesData }) {
+export function Graph({ data }) {
   const cyRef = useRef(null);
+
   useEffect(() => {
-    // グラフのデータやスタイルを定義
-    const elements = [
-      { data: { id: 'node1', label: 'Node 1' }, position: { x: 100, y: 100 } },
-      { data: { id: 'node2', label: 'Node 2' }, position: { x: 200, y: 200 } },
-      { data: { source: 'node1', target: 'node2' } },
-    ];
+    const elements = data;
+
+    console.log(elements);
 
     const style = [
       {
@@ -30,19 +28,17 @@ export function Graph({ nodesData, edgesData }) {
       },
     ];
 
-    // Cytoscape.jsインスタンスを作成
     const cy = cytoscape({
       container: cyRef.current,
       elements: elements,
       style: style,
-      layout: { name: 'preset' }, // レイアウトをプリセットに設定
+      layout: { name: 'grid' },
     });
 
-    // クリーンアップ関数
     return () => {
       cy.destroy();
     };
-  }, []); // 空の依存配列を渡すことで、初回レンダー時にのみ実行される
+  }, [data]);
 
   return (
     <div
