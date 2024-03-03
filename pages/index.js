@@ -1,28 +1,19 @@
-import { Sample } from '../components/sample';
-import { useRecoilState } from 'recoil';
-import { atom } from 'recoil';
-
-export const countState = atom({
-  key: 'countState',
-  default: 0,
-});
+import { useRecoilValue } from 'recoil';
+import {
+  InputData,
+  linksDataState,
+  nodesDataState,
+} from '../components/inputData';
+import { Graph } from '../components/graph';
 
 export default function Home({ Title }) {
-  const [count, setCount] = useRecoilState(countState);
+  const nodesData = useRecoilValue(nodesDataState);
+  const linksData = useRecoilValue(linksDataState);
   return (
     <div>
       <div>{Title}</div>
-      <div>選択するとこ</div>
-      <div>結果の表示</div>
-      <div>ちゃーと</div>
-      <Sample />
-      <div
-        onClick={() => {
-          setCount(count + 1);
-        }}
-      >
-        {count}
-      </div>
+      <InputData />
+      <Graph nodesData={nodesData} linksData={linksData} />
     </div>
   );
 }
