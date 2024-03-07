@@ -15,6 +15,18 @@ export const graphDataState = atom({
 export function InputData() {
   const relatedDataUrl = useRecoilValue(relatedDataUrlState);
   const [linksData, setLinksData] = useRecoilState(graphDataState);
+  const list = [
+    'US_input',
+    'CS_input',
+    'LaV',
+    'LaD',
+    'INAdm',
+    'INAvm',
+    'BA_F',
+    'BA_E',
+    'CA1',
+    'output',
+  ];
 
   console.log(linksData);
 
@@ -25,6 +37,7 @@ export function InputData() {
         const text = await res.json();
         text[0].shift();
         const d = text[0]
+          .filter((e) => list.includes(e[0]) && list.includes(e[1]))
           .map((e) => {
             return {
               group: 'edges',
