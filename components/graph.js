@@ -73,6 +73,12 @@ export function Graph({ data }) {
       console.log(la);
       console.log(ina);
       console.log(ba);
+
+      cy.edges().on('click', (event) => {
+        const edge = event.target;
+        console.log('edge clicked', edge.id());
+      });
+
       cy.layout({
         name: 'cola',
         randomize: false,
