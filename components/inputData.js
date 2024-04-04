@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import { useEffect } from 'react';
 import { useRecoilState, useRecoilValue, atom } from 'recoil';
 
@@ -14,7 +15,7 @@ export const graphDataState = atom({
 
 export function InputData() {
   const relatedDataUrl = useRecoilValue(relatedDataUrlState);
-  const [linksData, setLinksData] = useRecoilState(graphDataState);
+  const [graphData, setGraphData] = useRecoilState(graphDataState);
   const list = [
     'US_input',
     'CS_input',
@@ -28,7 +29,7 @@ export function InputData() {
     'output',
   ];
 
-  console.log(linksData);
+  console.log(graphData);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,20 +37,66 @@ export function InputData() {
       if (res.status == 200) {
         const text = await res.json();
         text[0].shift();
-        const d = text[0]
-          .filter((e) => list.includes(e[0]) && list.includes(e[1]))
+        const edges = text[0]
+          //.filter((e) => list.includes(e[0]) && list.includes(e[1]))
           .map((e) => {
             return {
               group: 'edges',
               data: {
-                id: e[0] + e[1],
+                id: e[0] + '-' + e[1],
                 source: e[0],
                 target: e[1],
               },
             };
           })
           .filter((e) => !(e.data.source == '' || e.data.target == ''));
-        setLinksData(getNodesFromLinks(d).concat(d));
+        const [baseData, copyData] = getNodesFromLinks(edges);
+        console.log('basedata', baseData);
+        console.log('copydata', copyData);
+
+        const removeNodesId = removeCycles(copyData);
+        console.log('removeNodes : ', removeNodesId);
+
+        const changeData = baseData.map((e) => {
+          const removed = removeNodesId.includes(e.data.id);
+          return {
+            group: 'nodes',
+            classes: [removed ? 'removed' : ''],
+            data: {
+              id: e.data.id,
+              label: e.data.id,
+              source: removed ? e.data.target : e.data.source,
+              target: removed ? e.data.source : e.data.target,
+              removed: removed,
+            },
+          };
+        });
+        console.log(
+          'changeData',
+          changeData.map((e) => e.data.id),
+        );
+        const addHierarchyData = addHierarchy(changeData);
+        console.log(baseData);
+        console.log(addHierarchyData);
+
+        const changeEdges = edges.map((e) => {
+          const removed =
+            removeNodesId.includes(e.data.source) ||
+            removeNodesId.includes(e.data.target);
+          if (removed) {
+            console.log('change', e.data.id);
+          }
+          return {
+            group: 'edges',
+            classes: [removed ? 'removedEdge' : ''],
+            data: {
+              id: e.data.id,
+              source: removed ? e.data.target : e.data.source,
+              target: removed ? e.data.source : e.data.target,
+            },
+          };
+        });
+        setGraphData(addHierarchyData.concat(changeEdges));
       }
     };
     fetchData();
@@ -58,22 +105,160 @@ export function InputData() {
   return <></>;
 }
 
-const getNodesFromLinks = (links) => {
-  const nodes = [];
+function getNodesFromLinks(links) {
+  let nodes = {};
 
   links.forEach((link) => {
-    if (!nodes.find((node) => node.data.id == link.data.source)) {
-      nodes.push({
-        group: 'nodes',
-        data: { id: link.data.source, label: link.data.source },
-      });
+    if (!nodes[link.data.source]) {
+      nodes[link.data.source] = createNode(link.data.source);
     }
-    if (!nodes.find((node) => node.data.id == link.data.target)) {
-      nodes.push({
-        group: 'nodes',
-        data: { id: link.data.target, label: link.data.target },
-      });
+    if (!nodes[link.data.target]) {
+      nodes[link.data.target] = createNode(link.data.target);
     }
   });
-  return nodes;
-};
+
+  links.forEach((link) => {
+    nodes[link.data.source].data.target.push(nodes[link.data.target]);
+    nodes[link.data.target].data.source.push(nodes[link.data.source]);
+  });
+
+  const data = Object.values(nodes);
+
+  const copyData = cloneDeep(data);
+  console.log(copyData);
+
+  return [data, copyData];
+}
+
+function createNode(id) {
+  return {
+    group: 'nodes',
+    data: {
+      id: id,
+      label: id,
+      source: [],
+      target: [],
+      s: [],
+      t: [],
+    },
+  };
+}
+
+function addHierarchy(data) {
+  //最長パス法
+  let d = [];
+  data.forEach((e) => {
+    d[e.data.id] = e;
+  });
+  const sourceNodes = data.filter((e) => e.data.source.length == 0);
+  function aH(node, hierarchy) {
+    const h = d[node.data.id].data.hierarchy;
+    if (h == undefined) {
+      d[node.data.id].data.hierarchy = hierarchy;
+      node.data.target.forEach((e) => {
+        //自己ループじゃない場合に再帰
+        if (node != e) {
+          aH(e, hierarchy + 1);
+        }
+      });
+      node.data.source.forEach((e) => {
+        //自己ループじゃない場合に再帰
+        if (node != e) {
+          aH(e, hierarchy - 1);
+        }
+      });
+    }
+  }
+  sourceNodes.forEach((e) => aH(e, 0));
+  const a = Object.keys(d).map((key) => d[key]);
+  console.log('hierarchy', a);
+  return a;
+}
+
+//閉路除去をする
+//処理的にはエッジを反転するノードを返す
+function removeCycles(data) {
+  const removedNodes = [];
+  // console.log(data);
+  for (let i = 0; i < 100; i++) {
+    updateSourceTarget(data);
+    data = removeSourceSink(data);
+
+    // console.log(data);
+
+    const cycles = findCycles(data);
+    // console.log('cycles : ', cycles);
+    if (cycles.length == 0) {
+      break;
+    }
+
+    updateSourceTarget(data);
+    const [d, r] = removeBigNode(data);
+    data = d;
+    removedNodes.push(r);
+  }
+  // console.log(data);
+  return removedNodes.map((e) => e.data.id);
+}
+
+function removeSourceSink(data) {
+  return data.filter(
+    (e) => !(e.data.source.length == 0 || e.data.target.length == 0),
+  );
+}
+
+function removeBigNode(data) {
+  const max = Math.max(...data.map((e) => e.data.big));
+  const removeNode = data.find((e) => e.data.big == max);
+  // console.log('remove nodes : ', removeNode);
+  return [data.filter((e) => e.data.id != removeNode.data.id), removeNode];
+}
+
+function updateSourceTarget(data) {
+  const dataIds = data.map((e) => e.data.id);
+  // console.log(dataIds);
+  // console.log(data[0].data.source.filter((f) => dataIds.includes(f.data.id)));
+
+  data.map((e) => {
+    // console.log(e.data.source.filter((f) => dataIds.includes(f.data.id)));
+    e.data.source = e.data.source.filter((f) => dataIds.includes(f.data.id));
+    e.data.target = e.data.target.filter((f) => dataIds.includes(f.data.id));
+    e.data.big = e.data.target.length - e.data.source.length;
+  });
+}
+
+function findCycles(data) {
+  var visited = {}; // ノードの訪問状態を記録するオブジェクト
+  var finished = {};
+  var cycles = []; // 閉路のリスト
+
+  // 深さ優先探索関数
+  function dfs(node, path) {
+    if (visited[node.data.id]) {
+      if (!finished[node.data.id]) {
+        var cycleStart = path.indexOf(node.data.id);
+        var cycle = path.slice(cycleStart); // 閉路の一部を取得
+
+        cycles.push(cycle);
+        // console.log('heiro', cycle);
+      }
+      return;
+    }
+
+    visited[node.data.id] = true;
+    path.push(node.data.id);
+
+    // console.log(nextNodes);
+    node.data.target.forEach((e) => dfs(e, path.slice()));
+    finished[node.data.id] = true;
+  }
+
+  // 各ノードに対してDFSを実行
+  data.forEach((e) => {
+    if (e.group == 'nodes') {
+      dfs(e, []);
+    }
+  });
+
+  return cycles;
+}

@@ -9,11 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^1.1.1",
     "@next/font": "13.4.19",
     "bulma": "^0.9.4",
     "cytoscape": "^3.28.1",
     "cytoscape-cola": "^2.5.1",
+    "cytoscape-dagre": "^2.5.0",
     "d3": "^7.8.5",
+    "dagre": "^0.8.5",
+    "lodash": "^4.17.21",
     "next": "13.4.19",
     "react": "18.2.0",
     "react-dom": "18.2.0",

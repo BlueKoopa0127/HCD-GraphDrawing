@@ -1,38 +1,44 @@
 import React, { useEffect, useRef, useState } from 'react';
 import cytoscape from 'cytoscape';
 import cola from 'cytoscape-cola';
+import cyDagre from 'cytoscape-dagre';
+import dagre from '@dagrejs/dagre';
 
 export function Graph({ data }) {
   const cyRef = useRef(null);
-  cytoscape.use(cola); // register extension
+  cytoscape.use(cyDagre); // register extension
 
   useEffect(() => {
     if (data.length != 0) {
-      const groupsName = ['BA', 'La', 'INA'];
-      const groups = groupsName.map((e) => {
-        return {
-          group: 'nodes',
-          classes: ['parent'],
-          data: { id: e + 'Parent', label: e },
-        };
-      });
-      const groupData = data.map((e) => {
-        if (e.group == 'edges') return e;
-        const parent = groups.find((g) => e.data.id.includes(g.data.label));
-        if (parent == undefined) {
-          return e;
-        }
-        return {
-          group: e.group,
-          data: {
-            id: e.data.id,
-            label: e.data.label,
-            parent: parent.data.id,
-          },
-        };
-      });
-      const elements = groups.concat(groupData);
-      console.log(elements);
+      // const groupsName = data
+      //   .map((e) => e.data.hierarchy)
+      //   .sort((a, b) => a - b);
+      // const groups = groupsName.map((e) => {
+      //   return {
+      //     group: 'nodes',
+      //     classes: ['parent'],
+      //     data: { id: e + 'Parent', label: e, hierarchy: e },
+      //   };
+      // });
+      // const groupData = data.map((e) => {
+      //   if (e.group == 'edges') return e;
+      //   const parent = groups.find((g) => e.data.hierarchy == g.data.hierarchy);
+      //   if (parent == undefined) {
+      //     return e;
+      //   }
+      //   return {
+      //     group: e.group,
+      //     data: {
+      //       id: e.data.id,
+      //       label: e.data.label,
+      //       hierarchy: e.data.hierarchy,
+      //       parent: parent.data.id,
+      //     },
+      //   };
+      // });
+      // const elements = groups.concat(groupData);
+      const elements = data;
+      //console.log(elements);
 
       const style = [
         {
@@ -45,7 +51,7 @@ export function Graph({ data }) {
         {
           selector: 'edge',
           style: {
-            width: 3,
+            width: 1,
             'line-color': '#ccc',
             'target-arrow-color': '#ccc',
             'target-arrow-shape': 'triangle',
@@ -58,6 +64,22 @@ export function Graph({ data }) {
             'background-color': '#EEEE00',
           },
         },
+        {
+          selector: '.removed',
+          style: {
+            'background-color': '#ff0000',
+          },
+        },
+        {
+          selector: '.removedEdge',
+          style: {
+            'line-color': '#ff0000',
+            'target-arrow-color': '#ff0000',
+            'target-arrow-shape': 'triangle',
+            'curve-style': 'straight',
+            width: 5,
+          },
+        },
       ];
 
       const cy = cytoscape({
@@ -65,22 +87,81 @@ export function Graph({ data }) {
         elements: elements,
         style: style,
       });
-      const input = cy.nodes('node[id = "CS_input"], node[id = "US_input"]');
-      const la = cy.nodes('node[id = "LaV"],node[id = "LaD"]');
-      const ina = cy.nodes('node[id = "INAvm"],node[id = "INAdm"]');
-      const ba = cy.nodes('node[id = "BA_F"],node[id = "BA_E"]');
-      console.log(input);
-      console.log(la);
-      console.log(ina);
-      console.log(ba);
+      console.log(cy.nodes());
 
+      // const input = cy.nodes('node[id = "CS_input"], node[id = "US_input"]');
+      // const la = cy.nodes('node[id = "LaV"],node[id = "LaD"]');
+      // const ina = cy.nodes('node[id = "INAvm"],node[id = "INAdm"]');
+      // const ba = cy.nodes('node[id = "BA_F"],node[id = "BA_E"]');
+      // console.log(input);
+      // console.log(la);
+      // console.log(ina);
+      // console.log(ba);
+
+      // cy.nodes().forEach((e) => {
+      //   const edges = e._private.edges;
+      //   const dPlus = edges.filter((f) => f._private.source == e).length;
+      //   const dMinus = edges.filter((f) => f._private.target == e).length;
+      //   e.data({ dPlus: dPlus });
+      //   e.data('dMinus', dMinus);
+      // });
+
+      const hierarchyAry = [
+        ...new Set(cy.nodes().map((e) => e._private.data.hierarchy)),
+      ].sort((a, b) => a - b);
+      console.log(hierarchyAry);
+
+      const hierarchy = hierarchyAry.map((e) => {
+        return cy.nodes(`node[hierarchy = ${e}]`).map((f) => {
+          return {
+            node: f,
+          };
+        });
+      });
+      console.log(hierarchy);
+      const gap = hierarchyAry
+        .map((e) => {
+          return cy.nodes(`node[hierarchy = ${e}]`);
+        })
+        .map((e, i, ary) => {
+          // return e.map((f) => {
+          //   return {
+          //     axis: 'x',
+          //     left: ary[i - 1][0],
+          //     right: ary[i][0],
+          //     gap: 100,
+          //   };
+          // });
+          if (0 < i) {
+            return {
+              axis: 'y',
+              left: ary[i - 1][0],
+              right: ary[i][0],
+              gap: 100,
+            };
+          } else {
+            return {
+              axis: 'y',
+              left: ary[ary.length - 1][0],
+              right: ary[i][0],
+              gap: 1000,
+            };
+          }
+        });
+      console.log(gap);
+
+      cy.nodes().on('click', (event) => {
+        const node = event.target;
+        console.log('node clicked', node._private.data.hierarchy, node);
+      });
       cy.edges().on('click', (event) => {
         const edge = event.target;
-        console.log('edge clicked', edge.id());
+        console.log('edge clicked', edge._private.data.id, edge);
       });
 
       cy.layout({
         name: 'cola',
+        name: 'dagre',
         randomize: false,
         fit: true,
         maxSimulationTime: 2000,
@@ -88,68 +169,11 @@ export function Graph({ data }) {
         edgeLength: 50,
         nodeSpacing: 50,
         convergenceThreshold: 0.01,
-        alignment: {
-          vertical: [
-            [{ node: input[0] }, { node: input[1] }],
-            [{ node: la[0] }, { node: la[1] }],
-            [{ node: ba[0] }, { node: ba[1] }],
-          ],
-          horizontal: [
-            [{ node: input[0] }, { node: la[0] }, { node: ba[0] }],
-            [{ node: input[1] }, { node: la[1] }, { node: ba[1] }],
-            [{ node: ina[0] }, { node: ina[1] }],
-          ],
-        },
-        gapInequalities: [
-          {
-            axis: 'x',
-            left: input[0],
-            right: la[0],
-            gap: 100,
-          },
-          {
-            axis: 'x',
-            left: la[0],
-            right: ina[0],
-            gap: 100,
-          },
-          {
-            axis: 'x',
-            left: ina[0],
-            right: ba[0],
-            gap: 100,
-          },
-          {
-            axis: 'x',
-            left: la[0],
-            right: ina[1],
-            gap: 100,
-          },
-          {
-            axis: 'x',
-            left: ina[1],
-            right: ba[0],
-            gap: 100,
-          },
-          {
-            axis: 'x',
-            left: ina[1],
-            right: ina[0],
-            gap: 100,
-          },
-          {
-            axis: 'y',
-            left: ina[0],
-            right: ba[0],
-            gap: 100,
-          },
-          {
-            axis: 'y',
-            left: ina[0],
-            right: ba[1],
-            gap: 100,
-          },
-        ],
+        // acyclicer: 'greedy',
+        ranker: 'network-simplex',
+        animate: true,
+        // alignment: { horizontal: hierarchy },
+        // gapInequalities: gap,
       }).run();
 
       return () => {
