@@ -54,35 +54,36 @@ export function InputData() {
         console.log('basedata', baseData);
         console.log('copydata', copyData);
 
-        const removeNodesId = removeCycles(copyData);
-        console.log('removeNodes : ', removeNodesId);
+        const [sl, sr] = greedyCycleRemoval(copyData);
 
-        const changeData = baseData.map((e) => {
-          const removed = removeNodesId.includes(e.data.id);
-          return {
-            group: 'nodes',
-            classes: [removed ? 'removed' : ''],
-            data: {
-              id: e.data.id,
-              label: e.data.id,
-              source: removed ? e.data.target : e.data.source,
-              target: removed ? e.data.source : e.data.target,
-              removed: removed,
-            },
-          };
-        });
-        console.log(
-          'changeData',
-          changeData.map((e) => e.data.id),
-        );
-        const addHierarchyData = addHierarchy(changeData);
+        // const removeNodesId = removeCycles(copyData);
+        // console.log('removeNodes : ', removeNodesId);
+
+        // const changeData = baseData.map((e) => {
+        //   const removed = removeNodesId.includes(e.data.id);
+        //   return {
+        //     group: 'nodes',
+        //     classes: [removed ? 'removed' : ''],
+        //     data: {
+        //       id: e.data.id,
+        //       label: e.data.id,
+        //       source: removed ? e.data.target : e.data.source,
+        //       target: removed ? e.data.source : e.data.target,
+        //       removed: removed,
+        //     },
+        //   };
+        // });
+        // console.log(
+        //   'changeData',
+        //   changeData.map((e) => e.data.id),
+        // );
+        const addHierarchyData = addHierarchy(baseData);
         console.log(baseData);
         console.log(addHierarchyData);
 
         const changeEdges = edges.map((e) => {
           const removed =
-            removeNodesId.includes(e.data.source) ||
-            removeNodesId.includes(e.data.target);
+            sr.includes(e.data.source) && sl.includes(e.data.target);
           if (removed) {
             console.log('change', e.data.id);
           }
@@ -144,6 +145,65 @@ function createNode(id) {
   };
 }
 
+function greedyCycleRemoval(nodes) {
+  // todo ノード消したのにsourceとtarget更新してないからバグってる
+  let sl = [];
+  let sr = [];
+  //ノードが存在するならループ
+  while (nodes.length != 0) {
+    console.log('nodes', nodes);
+    console.log('sl', sl);
+    console.log('sr', sr);
+    //シンクが存在するならループ
+    //シンクをnodesから消してsrの先頭に挿入
+    while (nodes.filter((e) => e.data.target.length == 0).length != 0) {
+      const sink = nodes.find((e) => e.data.target.length == 0);
+      nodes.forEach((e) => {
+        e.data.target = e.data.target.filter((f) => f.data.id != sink.data.id);
+      });
+      nodes = nodes.filter((e) => e.data.id != sink.data.id);
+      console.log('sr sink', sink);
+      sr.unshift(sink);
+    }
+    //ソースが存在するならループ
+    //ソースをnodesから消してslの末尾に挿入
+    while (nodes.filter((e) => e.data.source.length == 0).length != 0) {
+      const source = nodes.find((e) => e.data.source.length == 0);
+      nodes.forEach((e) => {
+        e.data.source = e.data.source.filter(
+          (f) => f.data.id != source.data.id,
+        );
+      });
+      nodes = nodes.filter((e) => e.data.id != source.data.id);
+      console.log('sl source', source);
+      sl.push(source);
+    }
+    if (nodes.length != 0) {
+      const max = Math.max(
+        ...nodes.map((e) => e.data.target.length - e.data.source.length),
+      );
+      const maximumVertex = nodes.find(
+        (e) => e.data.target.length - e.data.source.length == max,
+      );
+      console.log('sl maximumVertex', maximumVertex);
+      nodes.forEach((e) => {
+        e.data.target = e.data.target.filter(
+          (f) => f.data.id != maximumVertex.data.id,
+        );
+        e.data.source = e.data.source.filter(
+          (f) => f.data.id != maximumVertex.data.id,
+        );
+      });
+      nodes = nodes.filter((e) => e.data.id != maximumVertex.data.id);
+      sl.push(maximumVertex);
+    }
+  }
+  console.log('nodes', nodes);
+  console.log('sl', sl);
+  console.log('sr', sr);
+  return [sl.map((e) => e.data.id), sr.map((e) => e.data.id)];
+}
+
 function addHierarchy(data) {
   //最長パス法
   let d = [];
@@ -187,7 +247,7 @@ function removeCycles(data) {
     // console.log(data);
 
     const cycles = findCycles(data);
-    // console.log('cycles : ', cycles);
+    console.log('cycles : ', cycles);
     if (cycles.length == 0) {
       break;
     }

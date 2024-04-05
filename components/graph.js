@@ -77,7 +77,7 @@ export function Graph({ data }) {
             'target-arrow-color': '#ff0000',
             'target-arrow-shape': 'triangle',
             'curve-style': 'straight',
-            width: 5,
+            width: 1,
           },
         },
       ];
@@ -160,7 +160,7 @@ export function Graph({ data }) {
       });
 
       cy.layout({
-        name: 'cola',
+        //name: 'cola',
         name: 'dagre',
         randomize: false,
         fit: true,
@@ -172,8 +172,8 @@ export function Graph({ data }) {
         // acyclicer: 'greedy',
         ranker: 'network-simplex',
         animate: true,
-        // alignment: { horizontal: hierarchy },
-        // gapInequalities: gap,
+        alignment: { horizontal: hierarchy },
+        gapInequalities: gap,
       }).run();
 
       return () => {
