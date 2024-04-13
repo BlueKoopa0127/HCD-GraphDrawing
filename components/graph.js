@@ -56,6 +56,7 @@ export function Graph({ data }) {
             'target-arrow-color': '#ccc',
             'target-arrow-shape': 'triangle',
             'curve-style': 'straight',
+            opacity: 0.5,
           },
         },
         {
@@ -78,6 +79,7 @@ export function Graph({ data }) {
             'target-arrow-shape': 'triangle',
             'curve-style': 'straight',
             width: 1,
+            opacity: 0.5,
           },
         },
       ];
