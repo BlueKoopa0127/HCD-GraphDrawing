@@ -44,7 +44,7 @@ export function InputData() {
         const text = await res.json();
         text[0].shift();
         const edges = text[0]
-          //.filter((e) => list.includes(e[0]) && list.includes(e[1]))
+          .filter((e) => list.includes(e[0]) && list.includes(e[1]))
           .map((e) => {
             return {
               group: 'edges',
@@ -129,15 +129,15 @@ export function InputData() {
           return FAS;
         }
 
-        const b = getNodesFromLinks(reversedEdges);
+        const removedCyclesNodes = getNodesFromLinks(reversedEdges);
 
-        const cycle = findCycles(b);
-        console.log('cycle list', cycle);
+        const cycle = findCycles(removedCyclesNodes);
+        console.log('removed cycle list', cycle);
 
-        // const addHierarchyData = addHierarchy(getNodesFromLinks(changeEdges));
-        // console.log('hierarchy', addHierarchyData);
+        const addHierarchyData = addHierarchy(removedCyclesNodes);
+        console.log('hierarchy', addHierarchyData);
 
-        setGraphData(nodes.concat(reversedEdges));
+        setGraphData(addHierarchyData.concat(reversedEdges));
       }
     };
     fetchData();
@@ -204,14 +204,15 @@ function addHierarchy(data) {
   const sourceNodes = data.filter((e) => e.data.source.length == 0);
   function aH(node, hierarchy) {
     const h = d[node.data.id].data.hierarchy;
-    if (h == undefined /*|| h < hierarchy*/) {
+    if (h == undefined || h < hierarchy) {
       d[node.data.id].data.hierarchy = hierarchy;
       node.data.target.forEach((e) => {
         //自己ループじゃない場合に再帰
-        if (node != e) {
+        const targetNode = d[e];
+        if (node.data.id != targetNode.data.id) {
           console.log(node.data.id);
-          console.log(e.data.id);
-          aH(e, hierarchy + 1);
+          console.log(targetNode.data.id);
+          aH(targetNode, hierarchy + 1);
         }
       });
     }

@@ -6,7 +6,7 @@ import dagre from '@dagrejs/dagre';
 
 export function Graph({ data }) {
   const cyRef = useRef(null);
-  cytoscape.use(cyDagre); // register extension
+  cytoscape.use(cola); // register extension
 
   useEffect(() => {
     if (data.length != 0) {
@@ -121,35 +121,36 @@ export function Graph({ data }) {
         });
       });
       console.log(hierarchy);
-      const gap = hierarchyAry
-        .map((e) => {
-          return cy.nodes(`node[hierarchy = ${e}]`);
-        })
-        .map((e, i, ary) => {
-          // return e.map((f) => {
-          //   return {
-          //     axis: 'x',
-          //     left: ary[i - 1][0],
-          //     right: ary[i][0],
-          //     gap: 100,
-          //   };
-          // });
-          if (0 < i) {
-            return {
-              axis: 'y',
-              left: ary[i - 1][0],
-              right: ary[i][0],
-              gap: 100,
-            };
-          } else {
-            return {
-              axis: 'y',
-              left: ary[ary.length - 1][0],
-              right: ary[i][0],
-              gap: 1000,
-            };
-          }
-        });
+
+      const gap = cy.edges().map((e) => {
+        const s = e._private.source;
+        const sH = s._private.data.hierarchy;
+        const t = e._private.target;
+        const tH = t._private.data.hierarchy;
+        if (sH < tH) {
+          return {
+            axis: 'y',
+            left: s,
+            right: t,
+            gap: (tH - sH) * 100,
+          };
+        } else if (sH == tH) {
+          return {
+            axis: 'y',
+            left: s,
+            right: t,
+            gap: 0,
+            equality: 'true',
+          };
+        } else {
+          return {
+            axis: 'y',
+            left: t,
+            right: s,
+            gap: (sH - tH) * 100,
+          };
+        }
+      });
       console.log(gap);
 
       cy.nodes().on('click', (event) => {
@@ -162,19 +163,19 @@ export function Graph({ data }) {
       });
 
       cy.layout({
-        //name: 'cola',
-        name: 'dagre',
+        name: 'cola',
+        //name: 'dagre',
         randomize: false,
         fit: true,
         maxSimulationTime: 2000,
         avoidOverlaps: true,
-        edgeLength: 50,
-        nodeSpacing: 50,
+        // edgeLength: 50,
+        // nodeSpacing: 50,
         convergenceThreshold: 0.01,
         // acyclicer: 'greedy',
-        ranker: 'network-simplex',
+        // ranker: 'network-simplex',
         animate: true,
-        alignment: { horizontal: hierarchy },
+        // alignment: { horizontal: hierarchy },
         gapInequalities: gap,
       }).run();
 
