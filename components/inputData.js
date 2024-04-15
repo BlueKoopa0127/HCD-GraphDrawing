@@ -161,7 +161,7 @@ function inCycles(edge, cycles) {
   return false;
 }
 
-function getNodesFromLinks(links) {
+export function getNodesFromLinks(links) {
   let nodes = {};
 
   links.forEach((link) => {
@@ -210,8 +210,8 @@ function addHierarchy(data) {
         //自己ループじゃない場合に再帰
         const targetNode = d[e];
         if (node.data.id != targetNode.data.id) {
-          console.log(node.data.id);
-          console.log(targetNode.data.id);
+          // console.log(node.data.id);
+          // console.log(targetNode.data.id);
           aH(targetNode, hierarchy + 1);
         }
       });

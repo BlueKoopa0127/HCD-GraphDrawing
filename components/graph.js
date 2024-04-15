@@ -52,11 +52,11 @@ export function Graph({ data }) {
           selector: 'edge',
           style: {
             width: 1,
-            'line-color': '#ccc',
-            'target-arrow-color': '#ccc',
+            'line-color': '#aaa',
+            'target-arrow-color': '#aaa',
             'target-arrow-shape': 'triangle',
             'curve-style': 'straight',
-            opacity: 0.5,
+            opacity: 0.8,
           },
         },
         {
@@ -132,7 +132,7 @@ export function Graph({ data }) {
             axis: 'y',
             left: s,
             right: t,
-            gap: (tH - sH) * 100,
+            gap: 25,
           };
         } else if (sH == tH) {
           return {
@@ -147,7 +147,7 @@ export function Graph({ data }) {
             axis: 'y',
             left: t,
             right: s,
-            gap: (sH - tH) * 100,
+            gap: 25,
           };
         }
       });
@@ -164,17 +164,18 @@ export function Graph({ data }) {
 
       cy.layout({
         name: 'cola',
-        //name: 'dagre',
+        // name: 'dagre',
         randomize: false,
         fit: true,
-        maxSimulationTime: 2000,
-        avoidOverlaps: true,
+        flow: { axis: 'y', minSeparation: 30 }, // use DAG/tree flow layout if specified, e.g. { axis: 'y', minSeparation: 30 }
+        maxSimulationTime: 8000,
+        // avoidOverlaps: true,
         // edgeLength: 50,
-        // nodeSpacing: 50,
+        nodeSpacing: 50,
         convergenceThreshold: 0.01,
         // acyclicer: 'greedy',
         // ranker: 'network-simplex',
-        animate: true,
+        // animate: true,
         // alignment: { horizontal: hierarchy },
         gapInequalities: gap,
       }).run();
