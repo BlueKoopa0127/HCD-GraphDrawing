@@ -59,8 +59,8 @@ export default function Home({ Title }) {
   return (
     <div>
       <div>{Title}</div>
-      {/* <D3Graph /> */}
-      {<Graph data={[...graphData]} />}
+      <D3Graph data={[...graphData]} />
+      {/* {<Graph data={[...graphData]} />} */}
     </div>
   );
 }

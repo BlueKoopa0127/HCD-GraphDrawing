@@ -171,13 +171,13 @@ export function Graph({ data }) {
         maxSimulationTime: 8000,
         // avoidOverlaps: true,
         // edgeLength: 50,
-        nodeSpacing: 50,
+        nodeSpacing: 20,
         convergenceThreshold: 0.01,
         // acyclicer: 'greedy',
         // ranker: 'network-simplex',
         // animate: true,
         // alignment: { horizontal: hierarchy },
-        gapInequalities: gap,
+        // gapInequalities: gap,
       }).run();
 
       return () => {
