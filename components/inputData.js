@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 import { useEffect } from 'react';
 import { useRecoilState, useRecoilValue, atom } from 'recoil';
+import dagre from '@dagrejs/dagre';
 
 export const relatedDataUrlState = atom({
   key: 'relatedDataUrlState',
@@ -44,7 +45,7 @@ export function InputData() {
         const text = await res.json();
         text[0].shift();
         const edges = text[0]
-          .filter((e) => list.includes(e[0]) && list.includes(e[1]))
+          // .filter((e) => list.includes(e[0]) && list.includes(e[1]))
           .map((e) => {
             return {
               group: 'edges',
@@ -128,6 +129,10 @@ export function InputData() {
 
           return FAS;
         }
+        const d = nodes.concat(edges);
+
+        console.log(d);
+        console.log(getDagreLayout(d));
 
         const removedCyclesNodes = getNodesFromLinks(reversedEdges);
 
@@ -137,13 +142,47 @@ export function InputData() {
         const addHierarchyData = addHierarchy(removedCyclesNodes);
         console.log('hierarchy', addHierarchyData);
 
-        setGraphData(addHierarchyData.concat(reversedEdges));
+        setGraphData(nodes.concat(edges));
+        // setGraphData(addHierarchyData.concat(reversedEdges));
       }
     };
     fetchData();
   }, [relatedDataUrl]);
 
   return <></>;
+}
+
+function getDagreLayout(data) {
+  var g = new dagre.graphlib.Graph();
+
+  // Set an object for the graph label
+  g.setGraph({
+    rankdir: 'TB', // 'TB' for top to bottom layout
+    nodesep: 2, // horizontal space between nodes
+    edgesep: 2, // horizontal space between edges
+    ranksep: 5, // vertical space between nodes
+    marginx: 20,
+    marginy: 20,
+  });
+
+  // Default to assigning a new object as a label for each new edge.
+  g.setDefaultEdgeLabel(function () {
+    return {};
+  });
+
+  data.forEach((e) => {
+    if (e.group == 'nodes') {
+      g.setNode(e.data.label, {
+        label: e.data.label,
+        width: 1,
+        height: 1,
+      });
+    } else {
+      g.setEdge(e.data.source, e.data.target);
+    }
+  });
+  dagre.layout(g);
+  return g;
 }
 
 function inCycles(edge, cycles) {

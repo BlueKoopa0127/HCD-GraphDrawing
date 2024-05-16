@@ -6,7 +6,7 @@ import dagre from '@dagrejs/dagre';
 
 export function Graph({ data }) {
   const cyRef = useRef(null);
-  cytoscape.use(cola); // register extension
+  cytoscape.use(cyDagre); // register extension
 
   useEffect(() => {
     if (data.length != 0) {
@@ -163,19 +163,19 @@ export function Graph({ data }) {
       });
 
       cy.layout({
-        name: 'cola',
-        // name: 'dagre',
+        // name: 'cola',
+        name: 'dagre',
         randomize: false,
         fit: true,
-        flow: { axis: 'y', minSeparation: 30 }, // use DAG/tree flow layout if specified, e.g. { axis: 'y', minSeparation: 30 }
+        // flow: { axis: 'y', minSeparation: 30 }, // use DAG/tree flow layout if specified, e.g. { axis: 'y', minSeparation: 30 }
         maxSimulationTime: 8000,
         // avoidOverlaps: true,
         // edgeLength: 50,
         nodeSpacing: 20,
         convergenceThreshold: 0.01,
-        // acyclicer: 'greedy',
-        // ranker: 'network-simplex',
-        // animate: true,
+        acyclicer: 'greedy',
+        ranker: 'network-simplex',
+        animate: true,
         // alignment: { horizontal: hierarchy },
         // gapInequalities: gap,
       }).run();

@@ -13,7 +13,14 @@ export function D3Graph({ data }) {
     var g = new dagre.graphlib.Graph();
 
     // Set an object for the graph label
-    g.setGraph({});
+    g.setGraph({
+      rankdir: 'TB', // 'TB' for top to bottom layout
+      nodesep: 2, // horizontal space between nodes
+      edgesep: 2, // horizontal space between edges
+      ranksep: 5, // vertical space between nodes
+      marginx: 20,
+      marginy: 20,
+    });
 
     // Default to assigning a new object as a label for each new edge.
     g.setDefaultEdgeLabel(function () {
@@ -24,11 +31,19 @@ export function D3Graph({ data }) {
       if (e.group == 'nodes') {
         g.setNode(e.data.label, {
           label: e.data.label,
-          width: 10,
-          height: 10,
+          width: 1,
+          height: 1,
         });
       } else {
-        g.setEdge(e.data.source, e.data.target);
+        // g.setEdge(e.data.source, e.data.target);
+        if (
+          g.edge({ v: e.data.target, w: e.data.source }) ||
+          g.edge({ v: e.data.source, w: e.data.target })
+        ) {
+          console.log('tyohuku');
+        } else {
+          g.setEdge(e.data.source, e.data.target);
+        }
       }
     });
     dagre.layout(g);
@@ -50,14 +65,14 @@ export function D3Graph({ data }) {
     // g.setEdge('hford', 'lwilson');
     // g.setEdge('lwilson', 'kbacon');
 
-    g.nodes().forEach(function (v) {
-      console.log('Node ' + v + ': ' + JSON.stringify(g.node(v)));
-    });
-    g.edges().forEach(function (e) {
-      console.log(
-        'Edge ' + e.v + ' -> ' + e.w + ': ' + JSON.stringify(g.edge(e)),
-      );
-    });
+    // g.nodes().forEach(function (v) {
+    //   console.log('Node ' + v + ': ' + JSON.stringify(g.node(v)));
+    // });
+    // g.edges().forEach(function (e) {
+    //   console.log(
+    //     'Edge ' + e.v + ' -> ' + e.w + ': ' + JSON.stringify(g.edge(e)),
+    //   );
+    // });
     setGraphData(g);
 
     // Render the graph
@@ -215,20 +230,105 @@ export function D3Graph({ data }) {
     return <></>;
   }
   return (
+    <ZoomableSVG>
+      <svg
+        ref={svgRef}
+        width="10000px"
+        height="10000px"
+        style={{ backgroundColor: '#eee' }}
+      >
+        <marker
+          id="arrowred"
+          markerWidth="10"
+          markerHeight="10"
+          refX="5"
+          refY="5"
+          orient="auto"
+        >
+          <path d="M0,0 L10,5 L0,10 Z" fill="red" />
+        </marker>
+        <marker
+          id="arrowblack"
+          markerWidth="10"
+          markerHeight="10"
+          refX="5"
+          refY="5"
+          orient="auto"
+        >
+          <path d="M0,0 L10,5 L0,10 Z" fill="black" />
+        </marker>
+        {graphData2.nodes().map((e) => {
+          const n = graphData2.node(e);
+          return (
+            <g>
+              <text
+                x={n.x}
+                y={n.y - 2}
+                textAnchor="middle"
+                fill="black"
+                style={{ fontSize: n.width }}
+              >
+                {e}
+              </text>
+              <circle cx={n.x} cy={n.y} r={n.width} fill="black" />
+            </g>
+          );
+        })}
+        {graphData2.edges().map((e) => {
+          const edge = graphData2.edge(e);
+          const rEdge = graphData2.edge({ v: e.w, w: e.v });
+          if (rEdge) {
+            console.log(e.v, e.w);
+          }
+          const color =
+            graphData2.node(e.v).rank <= graphData2.node(e.w).rank
+              ? 'black'
+              : 'red';
+          let d = `M ${edge.points[0].x} ${edge.points[0].y}`;
+          for (let i = 1; i < edge.points.length; i++) {
+            d += ` L ${edge.points[i].x} ${edge.points[i].y}`;
+          }
+          return (
+            <g>
+              <path
+                d={d}
+                fill="none"
+                stroke={color}
+                strokeWidth={0.2}
+                markerEnd={`url(#arrow${color})`}
+              />
+            </g>
+          );
+        })}
+      </svg>
+    </ZoomableSVG>
+  );
+}
+
+function ZoomableSVG({ children, width, height }) {
+  const svgRef = useRef();
+  const [k, setK] = useState(1);
+  const [x, setX] = useState(0);
+  const [y, setY] = useState(0);
+  useEffect(() => {
+    const svgElement = d3.select(svgRef.current);
+    const initialTransform = d3.zoomIdentity;
+    const zoom = d3.zoom().on('zoom', (event) => {
+      const { x, y, k } = event.transform;
+      setK(k);
+      setX(x);
+      setY(y);
+    });
+    svgElement.call(zoom).call(zoom.transform, initialTransform);
+  }, []);
+
+  return (
     <svg
       ref={svgRef}
-      width="1000"
-      height="1000"
-      style={{ backgroundColor: '#eee' }}
+      viewBox="0 0 800 800"
+      style={{ cursor: 'grab', backgroundColor: '#eee' }}
     >
-      {graphData2.nodes().map((e) => {
-        const n = graphData2.node(e);
-        return (
-          <g>
-            <circle cx={n.x} cy={n.y} r={n.width} fill="black" />
-          </g>
-        );
-      })}
+      <g transform={`translate(${x},${y})scale(${k})`}>{children}</g>
     </svg>
   );
 }
