@@ -20,6 +20,8 @@ export function D3Graph({ data }) {
       ranksep: 5, // vertical space between nodes
       marginx: 20,
       marginy: 20,
+      acyclicer: 'greedy',
+      ranker: 'tight-tree',
     });
 
     // Default to assigning a new object as a label for each new edge.

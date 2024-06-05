@@ -7,6 +7,7 @@ import {
 import { Graph } from '../components/graph';
 import { D3Graph } from '../components/d3Graph';
 import { useEffect, useState } from 'react';
+import cloneDeep from 'lodash/cloneDeep'; // ディープコピーを行うためにlodashを使用
 
 export default function Home({ Title }) {
   const graphData = useRecoilValue(graphDataState);
@@ -56,11 +57,12 @@ export default function Home({ Title }) {
   //   { group: 'edges', data: { id: '1-4', source: 'node1', target: 'node4' } },
   // ];
   // console.log(sampleData.concat(sampleEdge));
+  const copy = cloneDeep(graphData);
   return (
     <div>
       <div>{Title}</div>
-      <D3Graph data={[...graphData]} />
-      {/* {<Graph data={[...graphData]} />} */}
+      {/* <D3Graph data={[...graphData]} /> */}
+      {<Graph data={[...copy]} />}
     </div>
   );
 }

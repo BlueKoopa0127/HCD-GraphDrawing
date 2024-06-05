@@ -6,7 +6,7 @@ import dagre from '@dagrejs/dagre';
 
 export function Graph({ data }) {
   const cyRef = useRef(null);
-  cytoscape.use(cyDagre); // register extension
+  cytoscape.use(cola); // register extension
 
   useEffect(() => {
     if (data.length != 0) {
@@ -88,6 +88,9 @@ export function Graph({ data }) {
         container: cyRef.current,
         elements: elements,
         style: style,
+        layout: {
+          name: 'preset',
+        },
       });
       console.log(cy.nodes());
 
@@ -124,15 +127,16 @@ export function Graph({ data }) {
 
       const gap = cy.edges().map((e) => {
         const s = e._private.source;
-        const sH = s._private.data.hierarchy;
+        const sH = s._private.data.rank;
         const t = e._private.target;
-        const tH = t._private.data.hierarchy;
+        const tH = t._private.data.rank;
+        console.log(sH);
         if (sH < tH) {
           return {
             axis: 'y',
             left: s,
             right: t,
-            gap: 25,
+            gap: 5 * (tH - sH),
           };
         } else if (sH == tH) {
           return {
@@ -147,15 +151,18 @@ export function Graph({ data }) {
             axis: 'y',
             left: t,
             right: s,
-            gap: 25,
+            gap: 5 * (sH - tH),
           };
         }
       });
       console.log(gap);
 
+      const a = cy.nodes();
+      console.log(a[0]);
+
       cy.nodes().on('click', (event) => {
         const node = event.target;
-        console.log('node clicked', node._private.data.hierarchy, node);
+        console.log('node clicked', node._private.data.rank, node);
       });
       cy.edges().on('click', (event) => {
         const edge = event.target;
@@ -163,8 +170,8 @@ export function Graph({ data }) {
       });
 
       cy.layout({
-        // name: 'cola',
-        name: 'dagre',
+        name: 'cola',
+        // name: 'dagre',
         randomize: false,
         fit: true,
         // flow: { axis: 'y', minSeparation: 30 }, // use DAG/tree flow layout if specified, e.g. { axis: 'y', minSeparation: 30 }
@@ -173,11 +180,17 @@ export function Graph({ data }) {
         // edgeLength: 50,
         nodeSpacing: 20,
         convergenceThreshold: 0.01,
-        acyclicer: 'greedy',
-        ranker: 'network-simplex',
-        animate: true,
-        // alignment: { horizontal: hierarchy },
-        // gapInequalities: gap,
+        // acyclicer: 'greedy',
+        // ranker: 'network-simplex',
+        // animate: true,
+        // alignment: {
+        //   horizontal: [
+        //     [{ node: a[0] }, { node: a[1] }],
+        //     [{ node: a[2] }, { node: a[4] }, { node: a[5] }],
+        //     [{ node: a[3] }],
+        //   ],
+        // }, // horizontal: [[{node: node3}, {node: node4}], [{node: node5}, {node: node6}]]}
+        gapInequalities: gap, //[{"axis":"y", "left":node1, "right":node2, "gap":25}]
       }).run();
 
       return () => {
