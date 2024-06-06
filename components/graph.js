@@ -130,7 +130,7 @@ export function Graph({ data }) {
         const sH = s._private.data.rank;
         const t = e._private.target;
         const tH = t._private.data.rank;
-        console.log(sH);
+        //console.log(sH);
         if (sH < tH) {
           return {
             axis: 'y',

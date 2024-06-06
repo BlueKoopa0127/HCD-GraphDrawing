@@ -384,6 +384,18 @@ export function InputData() {
         });
         console.log('initial', initialPositionNodes);
 
+        const edgesName = edges.map((e) => e.data.id);
+        const mutualEdges = edges
+          .map((e) => {
+            if (edgesName.includes(e.data.target + '-' + e.data.source)) {
+              return { ...e, classes: ['removedEdge'] };
+            }
+            return e;
+          })
+          .filter((e) =>
+            dagreLayout.edge({ v: e.data.source, w: e.data.target }),
+          );
+
         const removedCyclesNodes = getNodesFromLinks(reversedEdges);
 
         const cycle = findCycles(removedCyclesNodes);
@@ -392,7 +404,7 @@ export function InputData() {
         const addHierarchyData = addHierarchy(removedCyclesNodes);
         console.log('hierarchy', addHierarchyData);
 
-        setGraphData(initialPositionNodes.concat(edges));
+        setGraphData(initialPositionNodes.concat(mutualEdges));
         // setGraphData(addHierarchyData.concat(reversedEdges));
       }
     };
@@ -403,7 +415,7 @@ export function InputData() {
 }
 
 function getDagreLayout(data) {
-  var g = new dagre.graphlib.Graph();
+  var g = new dagre.graphlib.Graph({ compound: true });
 
   // Set an object for the graph label
   g.setGraph({
@@ -420,7 +432,7 @@ function getDagreLayout(data) {
     return {};
   });
 
-  data.forEach((e) => {
+  data.map((e) => {
     if (e.group == 'nodes') {
       g.setNode(e.data.label, {
         label: e.data.label,
@@ -428,11 +440,26 @@ function getDagreLayout(data) {
         height: 1,
       });
     } else {
-      // if (
-      //   g.edge({ v: e.data.target, w: e.data.source }) ||
-      //   g.edge({ v: e.data.source, w: e.data.target })
-      // ) {
-      //   console.log('tyohuku');
+      if (g.edge({ v: e.data.target, w: e.data.source })) {
+        console.log('相互参照', e.data.source);
+        const parent = 'Parent_' + e.data.source + '_' + e.data.target;
+        g.setNode(parent, {
+          label: parent,
+          width: 1,
+          height: 1,
+        });
+        g.setParent(e.data.source, parent);
+        g.setParent(e.data.target, parent);
+      }
+      if (g.edge({ v: e.data.source, w: e.data.target })) {
+        console.log('二重辺', e.data.source, e.data.target);
+        return;
+      }
+
+      if (e.data.source == e.data.target) {
+        console.log('自己ループ', e.data.source);
+        return;
+      }
       // } else {
       //   g.setEdge(e.data.source, e.data.target);
       // }
