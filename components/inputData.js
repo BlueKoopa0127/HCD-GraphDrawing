@@ -13,10 +13,15 @@ export const graphDataState = atom({
   key: 'graphDataState',
   default: [],
 });
+export const dagreLayoutState = atom({
+  key: 'dagreLayoutState',
+  default: [],
+});
 
 export function InputData() {
   const relatedDataUrl = useRecoilValue(relatedDataUrlState);
   const [graphData, setGraphData] = useRecoilState(graphDataState);
+  const [dagreLayout, setDagreLayout] = useRecoilState(dagreLayoutState);
   const list = [
     'IO',
     'RN',
@@ -372,6 +377,7 @@ export function InputData() {
 
         // console.log(d);
         const dagreLayout = getDagreLayout(d);
+        setDagreLayout(dagreLayout);
         // console.log('dagre layout', dagreLayout);
 
         const initialPositionNodes = nodes.map((e) => {
@@ -415,7 +421,7 @@ export function InputData() {
 }
 
 function getDagreLayout(data) {
-  var g = new dagre.graphlib.Graph({ compound: true });
+  var g = new dagre.graphlib.Graph({ compound: false });
 
   // Set an object for the graph label
   g.setGraph({
@@ -441,15 +447,15 @@ function getDagreLayout(data) {
       });
     } else {
       if (g.edge({ v: e.data.target, w: e.data.source })) {
-        console.log('相互参照', e.data.source);
-        const parent = 'Parent_' + e.data.source + '_' + e.data.target;
-        g.setNode(parent, {
-          label: parent,
-          width: 1,
-          height: 1,
-        });
-        g.setParent(e.data.source, parent);
-        g.setParent(e.data.target, parent);
+        // console.log('相互参照', e.data.source);
+        // const parent = 'Parent_' + e.data.source + '_' + e.data.target;
+        // g.setNode(parent, {
+        //   label: parent,
+        //   width: 1,
+        //   height: 1,
+        // });
+        // g.setParent(e.data.source, parent);
+        // g.setParent(e.data.target, parent);
       }
       if (g.edge({ v: e.data.source, w: e.data.target })) {
         console.log('二重辺', e.data.source, e.data.target);

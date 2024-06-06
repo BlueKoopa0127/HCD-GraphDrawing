@@ -2,83 +2,92 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { d3adaptor, Layout } from 'webcola';
 import dagre from '@dagrejs/dagre';
+import { useRecoilState, useRecoilValue } from 'recoil';
+import { dagreLayoutState } from './inputData';
 
 export function D3Graph({ data }) {
   console.log('d3Graph');
   console.log(data);
   const svgRef = useRef(null);
   const [graphData2, setGraphData] = useState();
+  const dagreLayout = useRecoilValue(dagreLayoutState);
+
+  // useEffect(() => {
+  //   var g = new dagre.graphlib.Graph();
+
+  //   // Set an object for the graph label
+  //   g.setGraph({
+  //     rankdir: 'TB', // 'TB' for top to bottom layout
+  //     nodesep: 2, // horizontal space between nodes
+  //     edgesep: 2, // horizontal space between edges
+  //     ranksep: 5, // vertical space between nodes
+  //     marginx: 20,
+  //     marginy: 20,
+  //     acyclicer: 'greedy',
+  //     ranker: 'tight-tree',
+  //   });
+
+  //   // Default to assigning a new object as a label for each new edge.
+  //   g.setDefaultEdgeLabel(function () {
+  //     return {};
+  //   });
+
+  //   data.forEach((e) => {
+  //     if (e.group == 'nodes') {
+  //       g.setNode(e.data.label, {
+  //         label: e.data.label,
+  //         width: 1,
+  //         height: 1,
+  //       });
+  //     } else {
+  //       // g.setEdge(e.data.source, e.data.target);
+  //       if (
+  //         g.edge({ v: e.data.target, w: e.data.source }) ||
+  //         g.edge({ v: e.data.source, w: e.data.target })
+  //       ) {
+  //         console.log('tyohuku');
+  //       } else {
+  //         g.setEdge(e.data.source, e.data.target);
+  //       }
+  //     }
+  //   });
+  //   dagre.layout(g);
+
+  //   // // Add nodes to the graph. The first argument is the node id. The second is
+  //   // // metadata about the node. In this case we're going to add labels to each of
+  //   // // our nodes.
+  //   // g.setNode('kspacey', { label: 'Kevin Spacey', width: 144, height: 100 });
+  //   // g.setNode('swilliams', { label: 'Saul Williams', width: 160, height: 100 });
+  //   // g.setNode('bpitt', { label: 'Brad Pitt', width: 108, height: 100 });
+  //   // g.setNode('hford', { label: 'Harrison Ford', width: 168, height: 100 });
+  //   // g.setNode('lwilson', { label: 'Luke Wilson', width: 144, height: 100 });
+  //   // g.setNode('kbacon', { label: 'Kevin Bacon', width: 121, height: 100 });
+
+  //   // // Add edges to the graph.
+  //   // g.setEdge('kspacey', 'swilliams');
+  //   // g.setEdge('swilliams', 'kbacon');
+  //   // g.setEdge('bpitt', 'kbacon');
+  //   // g.setEdge('hford', 'lwilson');
+  //   // g.setEdge('lwilson', 'kbacon');
+
+  //   // g.nodes().forEach(function (v) {
+  //   //   console.log('Node ' + v + ': ' + JSON.stringify(g.node(v)));
+  //   // });
+  //   // g.edges().forEach(function (e) {
+  //   //   console.log(
+  //   //     'Edge ' + e.v + ' -> ' + e.w + ': ' + JSON.stringify(g.edge(e)),
+  //   //   );
+  //   // });
+  //   setGraphData(g);
+
+  //   // Render the graph
+  // }, [data]);
 
   useEffect(() => {
-    var g = new dagre.graphlib.Graph();
-
-    // Set an object for the graph label
-    g.setGraph({
-      rankdir: 'TB', // 'TB' for top to bottom layout
-      nodesep: 2, // horizontal space between nodes
-      edgesep: 2, // horizontal space between edges
-      ranksep: 5, // vertical space between nodes
-      marginx: 20,
-      marginy: 20,
-      acyclicer: 'greedy',
-      ranker: 'tight-tree',
-    });
-
-    // Default to assigning a new object as a label for each new edge.
-    g.setDefaultEdgeLabel(function () {
-      return {};
-    });
-
-    data.forEach((e) => {
-      if (e.group == 'nodes') {
-        g.setNode(e.data.label, {
-          label: e.data.label,
-          width: 1,
-          height: 1,
-        });
-      } else {
-        // g.setEdge(e.data.source, e.data.target);
-        if (
-          g.edge({ v: e.data.target, w: e.data.source }) ||
-          g.edge({ v: e.data.source, w: e.data.target })
-        ) {
-          console.log('tyohuku');
-        } else {
-          g.setEdge(e.data.source, e.data.target);
-        }
-      }
-    });
-    dagre.layout(g);
-
-    // // Add nodes to the graph. The first argument is the node id. The second is
-    // // metadata about the node. In this case we're going to add labels to each of
-    // // our nodes.
-    // g.setNode('kspacey', { label: 'Kevin Spacey', width: 144, height: 100 });
-    // g.setNode('swilliams', { label: 'Saul Williams', width: 160, height: 100 });
-    // g.setNode('bpitt', { label: 'Brad Pitt', width: 108, height: 100 });
-    // g.setNode('hford', { label: 'Harrison Ford', width: 168, height: 100 });
-    // g.setNode('lwilson', { label: 'Luke Wilson', width: 144, height: 100 });
-    // g.setNode('kbacon', { label: 'Kevin Bacon', width: 121, height: 100 });
-
-    // // Add edges to the graph.
-    // g.setEdge('kspacey', 'swilliams');
-    // g.setEdge('swilliams', 'kbacon');
-    // g.setEdge('bpitt', 'kbacon');
-    // g.setEdge('hford', 'lwilson');
-    // g.setEdge('lwilson', 'kbacon');
-
-    // g.nodes().forEach(function (v) {
-    //   console.log('Node ' + v + ': ' + JSON.stringify(g.node(v)));
-    // });
-    // g.edges().forEach(function (e) {
-    //   console.log(
-    //     'Edge ' + e.v + ' -> ' + e.w + ': ' + JSON.stringify(g.edge(e)),
-    //   );
-    // });
-    setGraphData(g);
-
-    // Render the graph
-  }, [data]);
+    setGraphData(dagreLayout);
+  }, [dagreLayout]);
+  console.log(dagreLayout);
+  console.log(graphData2);
 
   // useEffect(() => {
   //   const fetchData = async () => {
@@ -228,7 +237,7 @@ export function D3Graph({ data }) {
   //   });
   // }, [data]);
 
-  if (graphData2 == undefined) {
+  if (graphData2 == undefined || graphData2?.length == 0) {
     return <></>;
   }
   return (
@@ -261,20 +270,24 @@ export function D3Graph({ data }) {
         </marker>
         {graphData2.nodes().map((e) => {
           const n = graphData2.node(e);
-          return (
-            <g>
-              <text
-                x={n.x}
-                y={n.y - 2}
-                textAnchor="middle"
-                fill="black"
-                style={{ fontSize: n.width }}
-              >
-                {e}
-              </text>
-              <circle cx={n.x} cy={n.y} r={n.width} fill="black" />
-            </g>
-          );
+          if (n.label.includes('Parent')) {
+            return;
+          } else {
+            return (
+              <g>
+                <text
+                  x={n.x}
+                  y={n.y - 2}
+                  textAnchor="middle"
+                  fill="black"
+                  style={{ fontSize: n.width }}
+                >
+                  {e}
+                </text>
+                <circle cx={n.x} cy={n.y} r={n.width} fill="black" />
+              </g>
+            );
+          }
         })}
         {graphData2.edges().map((e) => {
           const edge = graphData2.edge(e);
