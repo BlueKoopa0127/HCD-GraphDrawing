@@ -270,7 +270,7 @@ export function D3Graph({ data }) {
         </marker>
         {graphData2.nodes().map((e) => {
           const n = graphData2.node(e);
-          if (n.label.includes('Parent')) {
+          if (false) {
             return;
           } else {
             return (
@@ -284,7 +284,14 @@ export function D3Graph({ data }) {
                 >
                   {e}
                 </text>
-                <circle cx={n.x} cy={n.y} r={n.width} fill="black" />
+                <ellipse
+                  cx={n.x}
+                  cy={n.y}
+                  rx={n.width}
+                  ry={n.height}
+                  fill="black"
+                  opacity={0.5}
+                />
               </g>
             );
           }
@@ -293,7 +300,7 @@ export function D3Graph({ data }) {
           const edge = graphData2.edge(e);
           const rEdge = graphData2.edge({ v: e.w, w: e.v });
           if (rEdge) {
-            console.log(e.v, e.w);
+            // console.log(e.v, e.w);
           }
           const color =
             graphData2.node(e.v).rank <= graphData2.node(e.w).rank

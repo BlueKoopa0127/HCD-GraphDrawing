@@ -10,6 +10,31 @@ export function Graph({ data }) {
 
   useEffect(() => {
     if (data.length != 0) {
+      console.log('GRAPH DATA', data);
+      const nodes = data.nodes().map((e) => {
+        const node = data.node(e);
+        const parent = data.parent(e);
+
+        // console.log(e, node);
+        return {
+          group: 'nodes',
+          classes: [],
+          data: { id: e, label: e, parent: parent },
+          // position: { x: node.x, y: node.y },
+        };
+      });
+      const edges = data.edges().map((e) => {
+        // console.log(e);
+        return {
+          group: 'edges',
+          classes: [],
+          data: {
+            id: e.v + '-' + e.w,
+            source: e.v,
+            target: e.w,
+          },
+        };
+      });
       // const groupsName = data
       //   .map((e) => e.data.hierarchy)
       //   .sort((a, b) => a - b);
@@ -37,7 +62,7 @@ export function Graph({ data }) {
       //   };
       // });
       // const elements = groups.concat(groupData);
-      const elements = data;
+      const elements = nodes.concat(edges);
       //console.log(elements);
 
       const style = [
@@ -45,6 +70,14 @@ export function Graph({ data }) {
           selector: 'node',
           style: {
             'background-color': '#00FFFF',
+            label: 'data(label)',
+            opacity: 1,
+          },
+        },
+        {
+          selector: '$node > node',
+          style: {
+            'background-color': '#00FF00',
             label: 'data(label)',
           },
         },
@@ -111,51 +144,51 @@ export function Graph({ data }) {
       //   e.data('dMinus', dMinus);
       // });
 
-      const hierarchyAry = [
-        ...new Set(cy.nodes().map((e) => e._private.data.hierarchy)),
-      ].sort((a, b) => a - b);
-      console.log(hierarchyAry);
+      // const hierarchyAry = [
+      //   ...new Set(cy.nodes().map((e) => e._private.data.hierarchy)),
+      // ].sort((a, b) => a - b);
+      // console.log(hierarchyAry);
 
-      const hierarchy = hierarchyAry.map((e) => {
-        return cy.nodes(`node[hierarchy = ${e}]`).map((f) => {
-          return {
-            node: f,
-          };
-        });
-      });
-      console.log(hierarchy);
+      // const hierarchy = hierarchyAry.map((e) => {
+      //   return cy.nodes(`node[hierarchy = ${e}]`).map((f) => {
+      //     return {
+      //       node: f,
+      //     };
+      //   });
+      // });
+      // console.log(hierarchy);
 
-      const gap = cy.edges().map((e) => {
-        const s = e._private.source;
-        const sH = s._private.data.rank;
-        const t = e._private.target;
-        const tH = t._private.data.rank;
-        //console.log(sH);
-        if (sH < tH) {
-          return {
-            axis: 'y',
-            left: s,
-            right: t,
-            gap: 5 * (tH - sH),
-          };
-        } else if (sH == tH) {
-          return {
-            axis: 'y',
-            left: s,
-            right: t,
-            gap: 0,
-            equality: 'true',
-          };
-        } else {
-          return {
-            axis: 'y',
-            left: t,
-            right: s,
-            gap: 5 * (sH - tH),
-          };
-        }
-      });
-      console.log(gap);
+      // const gap = cy.edges().map((e) => {
+      //   const s = e._private.source;
+      //   const sH = s._private.data.rank;
+      //   const t = e._private.target;
+      //   const tH = t._private.data.rank;
+      //   //console.log(sH);
+      //   if (sH < tH) {
+      //     return {
+      //       axis: 'y',
+      //       left: s,
+      //       right: t,
+      //       gap: 5 * (tH - sH),
+      //     };
+      //   } else if (sH == tH) {
+      //     return {
+      //       axis: 'y',
+      //       left: s,
+      //       right: t,
+      //       gap: 0,
+      //       equality: 'true',
+      //     };
+      //   } else {
+      //     return {
+      //       axis: 'y',
+      //       left: t,
+      //       right: s,
+      //       gap: 5 * (sH - tH),
+      //     };
+      //   }
+      // });
+      // console.log(gap);
 
       const a = cy.nodes();
       console.log(a[0]);
@@ -190,7 +223,7 @@ export function Graph({ data }) {
         //     [{ node: a[3] }],
         //   ],
         // }, // horizontal: [[{node: node3}, {node: node4}], [{node: node5}, {node: node6}]]}
-        gapInequalities: gap, //[{"axis":"y", "left":node1, "right":node2, "gap":25}]
+        // gapInequalities: gap, //[{"axis":"y", "left":node1, "right":node2, "gap":25}]
       }).run();
 
       return () => {

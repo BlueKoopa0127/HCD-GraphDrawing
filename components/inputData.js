@@ -6,7 +6,7 @@ import dagre from '@dagrejs/dagre';
 export const relatedDataUrlState = atom({
   key: 'relatedDataUrlState',
   default:
-    'https://script.googleusercontent.com/macros/echo?user_content_key=eZc5ZI_5uIjKgfMjH2_SPPMYv8cxFBIkWPUr_9ikfkgxhj6xeHMxsbhhkkxdnrGqqkBp81s-CMyKcTthGOMyNSb9b-CHg-7sm5_BxDlH2jW0nuo2oDemN9CCS2h10ox_1xSncGQajx_ryfhECjZEnNn7QRqOoEBV3cKWTQSamdgSRZrrPeIyZwphpZ0GlGts72gFKSD-1bAtb3NGIwK2-kjPHDGPMaez-XMAlwbU29ealZQvKNBeidz9Jw9Md8uu&lib=MlymDeyPZhGLLMUX4XnL84AHWkD4xvv7U',
+    'https://script.googleusercontent.com/macros/echo?user_content_key=g6sfhUHXM_q9bHHRepK7ZgMH1Bf6soqAkmTJ7hmQrGsFZJgzNkFpUr8rQZe6h6oeSfJy1wU5WNnFBBXDGEPtKRJzuC8jx3v4m5_BxDlH2jW0nuo2oDemN9CCS2h10ox_1xSncGQajx_ryfhECjZEnMkc8iDnczd--0mYgKGzQv88P0Z9qHflwb8RHSuKpWiEl2-3trjPTbyJz7_OtDp2Jn2xZ0A_UJ788RjU6nYulyL2VFJOhI-QcNz9Jw9Md8uu&lib=MKxHInl40nO0X9VMVsZQb7jQfreIY07W7',
 });
 
 export const graphDataState = atom({
@@ -280,8 +280,6 @@ export function InputData() {
     'Cx.L6CT',
   ];
 
-  console.log(graphData);
-
   useEffect(() => {
     const fetchData = async () => {
       const res = await fetch(relatedDataUrl);
@@ -289,239 +287,158 @@ export function InputData() {
         const text = await res.json();
         text[0].shift();
         const edges = text[0]
-          .filter((e) => list.includes(e[0]) && list.includes(e[1]))
-          .map((e) => {
-            return {
-              group: 'edges',
-              data: {
-                id: e[0] + '-' + e[1],
-                source: e[0],
-                target: e[1],
-              },
-            };
-          })
-          .filter((e) => !(e.data.source == '' || e.data.target == ''));
+          // .filter((e) => list.includes(e[0]) && list.includes(e[1]))
+          .filter((e) => !(e[0] == '' || e[1] == ''));
+
+        const compound = text[2];
+        console.log('Compound', compound);
 
         const nodes = getNodesFromLinks(edges);
-        const nodesObject = {};
-        const edgesObject = {};
-        nodes.forEach((e) => (nodesObject[e.data.id] = e));
-        edges.forEach((e) => (edgesObject[e.data.id] = e));
-        console.log('nodes', nodes);
-        console.log('edges', edges);
-        console.log('nodesObject', nodesObject);
+        console.log('Nodes', nodes);
 
-        const cycles = findCycles(nodes, nodesObject);
-        console.log(cycles);
-
-        const fas = minimumFAS();
-        console.log('fas', fas);
-
-        const reversedEdges = edges.map((e) => {
-          // const isInCycle = inCycles(e);
-          const isChange = fas.includes(e.data.id);
-          if (isChange) {
-            return {
-              group: 'edges',
-              classes: ['removedEdge'],
-              data: {
-                id: e.data.id,
-                source: e.data.target,
-                target: e.data.source,
-              },
-            };
-          }
-          return e;
-        });
-
-        function minimumFAS() {
-          const Ea = []; // 非巡回部分グラフのエッジ
-          const processed = []; // 処理済みの頂点
-
-          // メインアルゴリズム
-          for (let vertex of nodes) {
-            if (!processed.includes(vertex.data.id)) {
-              const targetCount = vertex.data.target.length;
-              const sourceCount = vertex.data.source.length;
-
-              if (targetCount >= sourceCount) {
-                for (let targetId of vertex.data.target) {
-                  if (!processed.includes(targetId)) {
-                    const edge = edgesObject[vertex.data.id + '-' + targetId];
-                    Ea.push(edge.data.id);
-                  }
-                }
-              } else {
-                for (let sourceId of vertex.data.source) {
-                  if (!processed.includes(sourceId)) {
-                    const edge = edgesObject[sourceId + '-' + vertex.data.id];
-                    Ea.push(edge.data.id);
-                  }
-                }
-              }
-
-              // 処理済みの頂点に追加
-              processed.push(vertex.data.id);
-            }
-          }
-
-          // Eaに含まれないエッジがFASとなる
-          const FAS = edges
-            .filter((edge) => !Ea.includes(edge.data.id))
-            .map((e) => e.data.id);
-          console.log('Ea', Ea);
-
-          return FAS;
-        }
-        const d = nodes.concat(edges);
-
-        // console.log(d);
-        const dagreLayout = getDagreLayout(d);
+        const graph = nodes.concat(edges);
+        const dagreLayout = getDagreLayout(nodes, edges, compound);
         setDagreLayout(dagreLayout);
-        // console.log('dagre layout', dagreLayout);
-
-        const initialPositionNodes = nodes.map((e) => {
-          const f = dagreLayout.node(e.data.label);
-          return {
-            ...e,
-            position: { x: f.x, y: f.y },
-            data: { ...e.data, rank: f.rank },
-          };
-        });
-        console.log('initial', initialPositionNodes);
-
-        const edgesName = edges.map((e) => e.data.id);
-        const mutualEdges = edges
-          .map((e) => {
-            if (edgesName.includes(e.data.target + '-' + e.data.source)) {
-              return { ...e, classes: ['removedEdge'] };
-            }
-            return e;
-          })
-          .filter((e) =>
-            dagreLayout.edge({ v: e.data.source, w: e.data.target }),
-          );
-
-        const removedCyclesNodes = getNodesFromLinks(reversedEdges);
-
-        const cycle = findCycles(removedCyclesNodes);
-        console.log('removed cycle list', cycle);
-
-        const addHierarchyData = addHierarchy(removedCyclesNodes);
-        console.log('hierarchy', addHierarchyData);
-
-        setGraphData(initialPositionNodes.concat(mutualEdges));
-        // setGraphData(addHierarchyData.concat(reversedEdges));
       }
     };
     fetchData();
   }, [relatedDataUrl]);
 
+  useEffect(() => {
+    console.log('dagre', dagreLayout);
+    // const initialPositionNodes = nodes.map((e) => {
+    //   const f = dagreLayout.node(e.data.label);
+    //   return {
+    //     ...e,
+    //     position: { x: f.x, y: f.y },
+    //     data: { ...e.data, rank: f.rank },
+    //   };
+    // });
+    // console.log('initial', initialPositionNodes);
+    // const edgesName = edges.map((e) => e.data.id);
+    // const mutualEdges = edges
+    //   .map((e) => {
+    //     if (edgesName.includes(e.data.target + '-' + e.data.source)) {
+    //       return { ...e, classes: ['removedEdge'] };
+    //     }
+    //     return e;
+    //   })
+    //   .filter((e) => dagreLayout.edge({ v: e.data.source, w: e.data.target }));
+    // setGraphData(initialPositionNodes.concat(mutualEdges));
+    // // setGraphData(addHierarchyData.concat(reversedEdges));
+  }, [dagreLayout]);
+
   return <></>;
 }
 
-function getDagreLayout(data) {
-  var g = new dagre.graphlib.Graph({ compound: false });
+function getDagreLayout(nodes, edges, compound) {
+  var g = new dagre.graphlib.Graph({
+    directed: true,
+    compound: true,
+    multigraph: false,
+  });
 
   // Set an object for the graph label
   g.setGraph({
     rankdir: 'TB', // 'TB' for top to bottom layout
-    nodesep: 2, // horizontal space between nodes
-    edgesep: 2, // horizontal space between edges
-    ranksep: 5, // vertical space between nodes
-    marginx: 20,
-    marginy: 20,
+    nodesep: 50, // horizontal space between nodes
+    edgesep: 10, // horizontal space between edges
+    ranksep: 50, // vertical space between nodes
+    marginx: 100,
+    marginy: 100,
+
+    acyclicer: 'greedy',
+    ranker: 'longest-path',
   });
 
   // Default to assigning a new object as a label for each new edge.
   g.setDefaultEdgeLabel(function () {
     return {};
   });
-
-  data.map((e) => {
-    if (e.group == 'nodes') {
-      g.setNode(e.data.label, {
-        label: e.data.label,
-        width: 1,
-        height: 1,
-      });
-    } else {
-      if (g.edge({ v: e.data.target, w: e.data.source })) {
-        // console.log('相互参照', e.data.source);
-        // const parent = 'Parent_' + e.data.source + '_' + e.data.target;
-        // g.setNode(parent, {
-        //   label: parent,
-        //   width: 1,
-        //   height: 1,
-        // });
-        // g.setParent(e.data.source, parent);
-        // g.setParent(e.data.target, parent);
-      }
-      if (g.edge({ v: e.data.source, w: e.data.target })) {
-        console.log('二重辺', e.data.source, e.data.target);
-        return;
-      }
-
-      if (e.data.source == e.data.target) {
-        console.log('自己ループ', e.data.source);
-        return;
-      }
-      // } else {
-      //   g.setEdge(e.data.source, e.data.target);
-      // }
-      g.setEdge(e.data.source, e.data.target);
-    }
+  if (false) {
+    nodes = [
+      'CS_input',
+      'US_input',
+      'LaV',
+      'LaD',
+      'BA_F',
+      'BA_E',
+      'INAdm',
+      'INAvm',
+      'output',
+      'CA1',
+      'La',
+      'BA',
+      'INA',
+    ];
+    edges = [
+      ['CS_input', 'LaV'],
+      ['CS_input', 'LaD'],
+      ['US_input', 'LaV'],
+      ['US_input', 'LaD'],
+      ['LaV', 'BA_F'],
+      ['LaV', 'BA_E'],
+      ['LaV', 'INAdm'],
+      ['LaD', 'BA_F'],
+      ['LaD', 'BA_E'],
+      ['LaD', 'INAdm'],
+      ['BA_F', 'output'],
+      ['BA_E', 'INAvm'],
+      ['INAdm', 'INAvm'],
+      ['INAvm', 'INAdm'],
+      ['INAvm', 'BA_F'],
+      ['CA1', 'BA_E'],
+    ];
+    compound = [
+      ['La', ['LaV', 'LaD']],
+      ['BA', ['BA_E', 'BA_F']],
+      ['INA', ['INAdm', 'INAvm']],
+    ];
+  }
+  nodes.map((e) => {
+    g.setNode(e, { label: e, width: 10, height: 10 });
   });
-  dagre.layout(g);
+
+  edges.map((e) => {
+    g.setEdge(e[0], e[1]);
+  });
+
+  compound.map((e) => {
+    e[1].map((f) => {
+      if (e[0] != f) {
+        g.setParent(f, e[0]);
+      }
+    });
+  });
+
+  console.log(g);
+  // dagre.layout(g);
   return g;
 }
 
-function inCycles(edge, cycles) {
-  for (let i = 0; i < cycles.length; i++) {
-    const e = cycles[i];
-    for (let j = 0; j < e.length; j++) {
-      const id = j === 0 ? `${e[e.length - 1]}-${e[0]}` : `${e[j - 1]}-${e[j]}`;
-      // console.log(id);
-      // console.log(edge.data.id);
-      if (edge.data.id === id) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
+export function getNodesFromLinks(edges) {
+  let graph = {};
 
-export function getNodesFromLinks(links) {
-  let nodes = {};
-
-  links.forEach((link) => {
-    if (!nodes[link.data.source]) {
-      nodes[link.data.source] = createNode(link.data.source);
+  edges.forEach((e) => {
+    if (!graph[e[0]]) {
+      graph[e[0]] = createNode(e[0]);
     }
-    if (!nodes[link.data.target]) {
-      nodes[link.data.target] = createNode(link.data.target);
+    if (!graph[e[1]]) {
+      graph[e[1]] = createNode(e[1]);
     }
   });
 
-  links.forEach((link) => {
-    nodes[link.data.source].data.target.push(nodes[link.data.target].data.id);
-    nodes[link.data.target].data.source.push(nodes[link.data.source].data.id);
+  edges.forEach((e) => {
+    graph[e[0]].target.push(graph[e[1]].id);
   });
 
-  return Object.values(nodes);
+  return Object.values(graph);
 }
 
 function createNode(id) {
   return {
-    group: 'nodes',
-    data: {
-      id: id,
-      label: id,
-      source: [],
-      target: [],
-      s: [],
-      t: [],
-    },
+    id: id,
+    target: [],
   };
 }
 

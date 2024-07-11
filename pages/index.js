@@ -1,6 +1,7 @@
 import { useRecoilValue } from 'recoil';
 import {
   InputData,
+  dagreLayoutState,
   getNodesFromLinks,
   graphDataState,
 } from '../components/inputData';
@@ -11,6 +12,7 @@ import cloneDeep from 'lodash/cloneDeep'; // ディープコピーを行うた�
 
 export default function Home({ Title }) {
   const graphData = useRecoilValue(graphDataState);
+  const dagreLayout = useRecoilValue(dagreLayoutState);
   InputData();
 
   const [graphData2, setGraphData] = useState([]);
@@ -61,8 +63,7 @@ export default function Home({ Title }) {
   return (
     <div>
       <div>{Title}</div>
-      {<Graph data={[...copy]} />}
-      <D3Graph data={[...graphData]} />
+      {<Graph data={dagreLayout} /> /*<D3Graph data={[...graphData]} />} */}
     </div>
   );
 }
